@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2011-2011 Frank Fischer.
+  
+  This file is part of element4j (see <http://www.element4j.org>).
+  
+  element4j is free software: you can redistribute it and/or modify it under the terms 
+  of the GNU Lesser General Public License as published by the Free Software Foundation,
+  either version 3 of the License, or (at your option) any later version.
+  
+  element4j is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU Lesser General Public License for more details.
+  
+  You should have received a copy of the GNU Lesser General Public License along with element4j.
+  If not, see <http://www.gnu.org/licenses/>.
+-->
+<project name="element4j.json " default="pack" basedir=".">
+  
+  <tstamp><format property="datetime" pattern="yyyyMMdd_HHmm"/></tstamp>
+  <property name="version" value="0.1.${datetime}"/>
+  
+  <path id="compile.classpath">
+    <pathelement location="build/classes"/>
+  </path>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="init" depends="clean">
+    <mkdir dir="build"           />
+    <mkdir dir="build/classes"   />
+    <mkdir dir="build/deploy"    />
+    <mkdir dir="build/deploy/api"/>
+  </target>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="updateVersion" depends="init">
+    <replaceregexp match   = "^  public static final String version  = &quot;.*&quot;;"
+                   replace =  "  public static final String version  = &quot;${version}&quot;;"
+                   byline  = "true" >
+      <fileset dir="src"><include name="**/Metadata.java"/></fileset>
+    </replaceregexp>
+    <replaceregexp match   = "@version .*"
+                   replace = "@version ${version}"
+                   byline  = "true" >
+      <fileset dir="src"><include name="**/**.java"/></fileset>
+    </replaceregexp>
+  </target>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="compile" depends="updateVersion">
+    <javac destdir            = "build/classes"
+           includeantruntime  = "false"
+           source             = "1.6"
+           target             = "1.6"
+           deprecation        = "on" 
+           includeJavaRuntime = "yes"
+           debug              = "on" 
+           debuglevel         = "lines,vars,source" 
+           optimize           = "off">
+      <src path="src"/>
+      <classpath refid="compile.classpath"/>
+      <include name="**/*.java"/>
+      <exclude name="**/package-info.java"/>
+      <compilerarg value="-Xlint"/>
+    </javac>
+  </target>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="addResources" depends="compile">
+    <copy todir="build/classes">
+      <fileset dir="src">
+        <exclude name="**/*.java" />
+      </fileset>
+    </copy>
+  </target>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="javadoc" depends="addResources">
+    <javadoc packagenames = "*"
+             sourcepath   = "src"
+             destdir      = "build/deploy/api"
+             author       = "true"
+             version      = "true"
+             use          = "true"
+             private      = "false"
+             verbose      = "false"
+             linksource   = "true"
+             header       = ""
+             footer       = ""
+             windowtitle  = "${ant.project.name} API"
+             doctitle     = "${ant.project.name} API"
+             bottom       = "&lt;small&gt;${ant.project.name}, v${version}&lt;br&gt;Dr. Frank Fischer, frank@jcpsim.org, &lt;a href=&quot;http://www.jcpsim.org&quot;&gt;http://www.element4j.org&lt;/a&gt;&lt;/small&gt;">
+      <classpath refid="compile.classpath"/>
+      <link href="http://download.oracle.com/javase/6/docs/api/"/>
+    </javadoc>
+  </target>
+  
+  <!-- ===================================================================================================== -->
+  
+  <target name="pack" depends="javadoc">
+    <jar destfile="build/deploy/${ant.project.name}_${version}.jar"     basedir="build/classes"  includes="**" excludes="**/*_Example*"/>
+    <jar destfile="build/deploy/${ant.project.name}_${version}_src.jar" basedir="."              excludes="build/**, bin/**, .settings/**, .classpath, .project"/>
+  </target>
+  
+</project>
